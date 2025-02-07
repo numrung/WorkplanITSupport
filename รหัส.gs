@@ -6,92 +6,84 @@ function doGet() {
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
-// 📌 ดึงข้อมูลเหตุการณ์จาก Google Sheets (แก้ไขให้โหลดเร็วขึ้น)
 function getEvents() {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Events');
-  if (!sheet) {
-    Logger.log("❌ ไม่พบชีต Events");
-    return [];
-  }
-
+  if (!sheet) return [];
+  
   var data = sheet.getDataRange().getValues();
-  var events = [];
-
-  for (var i = 1; i < data.length; i++) {
-    if (data[i][0] && data[i][1]) {  // ตรวจสอบว่ามีชื่อเหตุการณ์และวันที่
-      events.push({
-        id: i,
-        title: data[i][0],  // คอลัมน์ A: ชื่อเหตุการณ์
-        start: formatDate(data[i][1]),  // คอลัมน์ B: วันที่เริ่มต้น
-        end: data[i][2] ? formatDate(data[i][2]) : formatDate(data[i][1]) // คอลัมน์ C: วันที่สิ้นสุด (ถ้าไม่มีให้ใช้ start)
-      });
-    }
-  }
-
-  Logger.log("✅ ข้อมูลเหตุการณ์ที่ดึงมา: " + JSON.stringify(events)); // ตรวจสอบข้อมูลที่ส่งไป
+  var events = data.slice(1).map((row, i) => row[0] && row[1] ? {
+    id: i + 1,
+    title: row[0],
+    start: formatDate(row[1]),
+    end: row[2] ? formatDate(row[2]) : formatDate(row[1])
+  } : null).filter(Boolean);
+  
   return events;
 }
 
-// 📌 ฟังก์ชันช่วยจัดรูปแบบวันที่ให้เป็น YYYY-MM-DD
 function formatDate(date) {
-  if (typeof date === "string") return date; // ถ้าเป็น string อยู่แล้ว ให้คืนค่าเดิม
-  return Utilities.formatDate(new Date(date), Session.getScriptTimeZone(), "yyyy-MM-dd");
+  return typeof date === "string" ? date : Utilities.formatDate(new Date(date), Session.getScriptTimeZone(), "yyyy-MM-dd");
 }
 
-// 📌 ค้นหาบรรทัดของวันที่ในคอลัมน์ B (แก้ไขให้ทำงานเร็วขึ้น)
-function findRowByDate(date) {
+function addEvent(title, startDate, endDate) {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Events');
-  if (!sheet) {
-    Logger.log("❌ ไม่พบชีต Events");
-    return -1;
-  }
-
   var data = sheet.getDataRange().getValues();
-  var formattedDate = formatDate(date);
-
+  
+  var rowIndex = -1;
   for (var i = 1; i < data.length; i++) {
-    var sheetDate = formatDate(data[i][1]); // คอลัมน์ B (index 1) = วันที่เริ่มต้น
-    if (formattedDate === sheetDate) {
-      Logger.log("✅ พบวันที่ในแถวที่: " + (i + 1));
-      return i + 1; // เนื่องจาก Google Sheets เริ่มแถวที่ 1
+    var sheetStartDate = formatDate(data[i][4]); // คอลัมน์ E (Index 4)
+    if (sheetStartDate === startDate) {
+      rowIndex = i + 1;
+      break;
     }
   }
 
-  Logger.log("❌ ไม่พบวันที่ในระบบ");
-  return -1; // ไม่พบวันที่
+  if (rowIndex === -1) {
+    // หากไม่พบแถวที่ตรงกับวันที่เริ่มต้น ให้เพิ่มแถวใหม่
+    rowIndex = sheet.getLastRow() + 1;
+  }
+  
+  // บันทึกเหตุการณ์ลงในแถวที่พบหรือแถวใหม่
+  sheet.getRange(rowIndex, 1).setValue(title); // คอลัมน์ A
+  sheet.getRange(rowIndex, 2).setValue(startDate); // คอลัมน์ B
+  sheet.getRange(rowIndex, 3).setValue(endDate); // คอลัมน์ C
+  sheet.getRange(rowIndex, 5).setValue(startDate); // คอลัมน์ E (วันที่เริ่มต้น)
+
+  return "เพิ่มเหตุการณ์เสร็จสิ้น!";
 }
 
-// 📌 เพิ่มเหตุการณ์ไปที่บรรทัดเดียวกับวันที่ในคอลัมน์ B
-function addEvent(title, startDate, endDate) {
+function getEventDetails(eventId) {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Events');
-  var row = findRowByDate(startDate);
+  var data = sheet.getDataRange().getValues();
+  var eventDetails = {};
 
-  if (row === -1) {
-    Logger.log("❌ ไม่สามารถเพิ่มเหตุการณ์! วันที่ไม่มีอยู่ในระบบ");
-    return "ไม่สามารถเพิ่มเหตุการณ์! วันที่ไม่มีอยู่ในระบบ";
+  for (var i = 1; i < data.length; i++) {
+    if (i + 1 === eventId) {  // ใช้ index แทน ID จริง
+      eventDetails.description = data[i][2] || "ไม่มีข้อมูล";  // ข้อมูลจากคอลัมน์ C
+      break;
+    }
   }
 
-  sheet.getRange(row, 1).setValue(title);  // คอลัมน์ A = ชื่อเหตุการณ์
-  sheet.getRange(row, 2).setValue(startDate);  // คอลัมน์ B = วันที่เริ่มต้น
-  sheet.getRange(row, 3).setValue(endDate || startDate); // คอลัมน์ C = วันที่สิ้นสุด (ถ้าไม่มีให้ใช้ start)
-
-  Logger.log("✅ เพิ่มเหตุการณ์สำเร็จ: " + title);
-  return "เพิ่มเหตุการณ์สำเร็จ!";
+  return eventDetails;
 }
 
-// 📌 ล้างค่าของเหตุการณ์โดยใช้วันที่เริ่มต้นในการค้นหาแถว
 function deleteEventByStartDate(startDate) {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Events');
-  var row = findRowByDate(startDate);
+  var data = sheet.getDataRange().getValues();
 
-  if (row === -1) {
-    Logger.log("❌ ไม่พบวันที่ในระบบ");
-    return "ไม่พบวันที่ในระบบ";
+  for (var i = 1; i < data.length; i++) {
+    if (formatDate(data[i][4]) === startDate) { // คอลัมน์ E
+      // ลบข้อมูลในคอลัมน์ A, B, C
+      sheet.getRange(i + 1, 1).setValue(""); // ลบชื่อเหตุการณ์ในคอลัมน์ A
+      sheet.getRange(i + 1, 2).setValue(""); // ลบวันที่เริ่มต้นในคอลัมน์ B
+      sheet.getRange(i + 1, 3).setValue(""); // ลบวันที่สิ้นสุดในคอลัมน์ C
+      return "เหตุการณ์ถูกลบข้อมูลเรียบร้อย!";
+    }
   }
 
-  // ล้างค่าในคอลัมน์ A, B และ C ของแถวนั้น (คอลัมน์อื่นคงไว้)
-  sheet.getRange(row, 1, 1, 3).clearContent();
+  return "ไม่พบเหตุการณ์ที่ต้องการลบ!";
+}
 
-  Logger.log("✅ ล้างค่าของเหตุการณ์สำเร็จในแถวที่: " + row);
-  return "ล้างค่าของเหตุการณ์สำเร็จ!";
+function include(filename) {
+  return HtmlService.createHtmlOutputFromFile(filename).getContent();
 }
