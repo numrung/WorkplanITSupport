@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
   <meta charset="utf-8">
-  <title>ตารางแผนปฎิบัติงาน</title>
+  <title>work plan itsuport</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.css" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
@@ -16,81 +16,30 @@
     .swal2-popup { font-family: 'Sarabun', sans-serif; }
   </style>
 </head>
-
 <body>
   <div class="container my-5">
     <h1 class="text-center" style="font-size: 24px;">
       ตารางแผนการปฎิบัติงานเจ้าหน้าที่สนับสนุนโครงการสุราภาค4/ประจำเดือน:
     </h1>
+    <button class="btn btn-primary mb-3" onclick="openEventModal()">เพิ่มเหตุการณ์</button>
     <div id="calendar"></div>
   </div>
 
   <script>
     function loadCalendarEvents() {
       google.script.run.withSuccessHandler(function(events) {
-        $('#calendar').fullCalendar('destroy'); // ล้างก่อนโหลดใหม่
+        $('#calendar').fullCalendar('destroy');
         $('#calendar').fullCalendar({
           header: { left: 'prev,next today', center: 'title', right: 'month,agendaWeek,agendaDay' },
           locale: 'th',
           events: events,
-          selectable: true,
-          select: function(start) {
-            const selectedDate = moment(start).format('YYYY-MM-DD');
-
-            google.script.run.withSuccessHandler(function(row) {
-              if (row === -1) {
-                Swal.fire("ข้อผิดพลาด", "ไม่สามารถเพิ่มเหตุการณ์! วันที่ไม่มีอยู่ในระบบ", "error");
-                return;
-              }
-
-              Swal.fire({
-                title: 'เพิ่มเหตุการณ์',
-                html: `  
-                  <input id="eventTitle" class="swal2-input" list="eventOptions" placeholder="เลือกหรือพิมพ์ชื่อเหตุการณ์">
-                  <datalist id="eventOptions">
-                    <option value="ศูนย์ขอนแก่น">
-                    <option value="ศูนย์สกลนคร">
-                    <option value="ศูนย์อุดรธานี">
-                    <option value="ศูนย์ชัยภูมิ">
-                    <option value="หนองคาย">
-                    <option value="เลย">
-                    <option value="นครพนม">
-                    <option value="มุกดาหาร">
-                    <option value="กาฬสินธุ">
-                    <option value="มหาสารคาม">
-                    <option value="ประชุมทีมขาย">
-                    <option value="อบรพนักงานใหม่">
-                  </datalist>
-                  <input type="date" id="startDate" class="swal2-input" value="${selectedDate}">
-                  <input type="date" id="endDate" class="swal2-input">
-                `,
-                showCancelButton: true,
-                confirmButtonText: 'บันทึก',
-                preConfirm: () => {
-                  const title = document.getElementById('eventTitle').value;
-                  const startDate = document.getElementById('startDate').value;
-                  const endDate = document.getElementById('endDate').value || startDate;
-                  if (!title) { 
-                    Swal.showValidationMessage('กรุณากรอกชื่อเหตุการณ์'); 
-                    return false; 
-                  }
-                  return { title, startDate, endDate };
-                }
-              }).then((result) => {
-                if (result.isConfirmed) {
-                  google.script.run.withSuccessHandler(() => {
-                    Swal.fire("สำเร็จ!", "เพิ่มเหตุการณ์แล้ว", "success");
-                    loadCalendarEvents(); // โหลดข้อมูลใหม่ ไม่ต้องรีเฟรช
-                  }).addEvent(result.value.title, result.value.startDate, result.value.endDate);
-                }
-              });
-            }).findRowByDate(selectedDate);
-          },
           eventClick: function(event) {
             Swal.fire({
               title: event.title,
-              html: `<p><strong>เริ่ม:</strong> ${moment(event.start).format('DD/MM/YYYY')}</p>
-                     <p><strong>สิ้นสุด:</strong> ${event.end ? moment(event.end).format('DD/MM/YYYY') : 'ไม่ระบุ'}</p>`,
+              html: ` 
+                <p><strong>วันที่เริ่ม:</strong> ${moment(event.start).format('DD/MM/YYYY')}</p>
+                <p><strong>วันที่สิ้นสุด:</strong> ${event.end ? moment(event.end).format('DD/MM/YYYY') : 'ไม่ระบุ'}</p>
+              `,
               icon: 'info',
               showCancelButton: true,
               confirmButtonText: 'ล้างค่าเหตุการณ์',
@@ -99,7 +48,7 @@
                 var startDate = moment(event.start).format('YYYY-MM-DD');
                 google.script.run.withSuccessHandler(function(message) {
                   Swal.fire("ล้างสำเร็จ!", message, "success");
-                  loadCalendarEvents(); // โหลดข้อมูลใหม่ ไม่ต้องรีเฟรช
+                  loadCalendarEvents();
                 }).deleteEventByStartDate(startDate);
               }
             });
@@ -108,10 +57,62 @@
       }).getEvents();
     }
 
+    function openEventModal() {
+      Swal.fire({
+        title: 'เพิ่มเหตุการณ์',
+        html: `
+          <label for="eventTitle">ชื่อเหตุการณ์:</label>
+          <input list="eventOptions" id="eventTitle" class="swal2-input" placeholder="เลือกหรือพิมพ์ชื่อเหตุการณ์">
+          <datalist id="eventOptions">
+            <option value="ศูนย์ขอนแก่น">
+            <option value="ศูนย์สกลนคร">
+            <option value="ศูนย์อุดรธานี">
+            <option value="ศูนย์ชัยภูมิ">
+            <option value="หนองคาย">
+            <option value="เลย">
+            <option value="นครพนม">
+            <option value="มุกดาหาร">
+            <option value="กาฬสินธุ์">
+            <option value="มหาสารคาม">
+            <option value="ประชุมทีมขาย">
+            <option value="อบรพนักงานใหม่">
+          </datalist>
+          <br><br>
+          <label for="startDate">วันที่เริ่มต้น:</label>
+          <input type="date" id="startDate" class="swal2-input">
+          <br><br>
+          <label for="endDate">วันที่สิ้นสุด:</label>
+          <input type="date" id="endDate" class="swal2-input">
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'บันทึก',
+        preConfirm: () => {
+          const title = document.getElementById('eventTitle').value;
+          const startDate = document.getElementById('startDate').value;
+          const endDate = document.getElementById('endDate').value || startDate;
+          if (!title) {
+            Swal.showValidationMessage('กรุณากรอกชื่อเหตุการณ์');
+            return false;
+          }
+          return { title, startDate, endDate };
+        }
+      }).then((result) => {
+        if (result.isConfirmed) {
+          google.script.run.withSuccessHandler(() => {
+            Swal.fire({
+              title: 'เพิ่มเสร็จ!',
+              text: `ชื่อเหตุการณ์: ${result.value.title}\nวันที่เริ่มต้น: ${result.value.startDate}\nวันที่สิ้นสุด: ${result.value.endDate}`,
+              icon: 'success',
+            });
+            loadCalendarEvents();
+          }).addEvent(result.value.title, result.value.startDate, result.value.endDate);
+        }
+      });
+    }
+
     $(document).ready(function() { 
       loadCalendarEvents(); 
     });
   </script>
 </body>
 </html>
-
