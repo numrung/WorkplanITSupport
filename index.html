@@ -18,8 +18,8 @@
 </head>
 <body>
   <div class="container my-5">
-    <h1 class="text-center" style="font-size: 24px;">
-      ตารางแผนการปฎิบัติงานเจ้าหน้าที่สนับสนุนโครงการสุราภาค4/ประจำเดือน:
+    <h1 class="text-center" style="font-size: 22px;">
+      ตารางแผนการปฎิบัติงานเจ้าหน้าที่สนับสนุนโครงการสุราภาค4
     </h1>
     <button class="btn btn-primary mb-3" onclick="openEventModal()">เพิ่มเหตุการณ์</button>
     <div id="calendar"></div>
@@ -38,7 +38,7 @@
               title: event.title,
               html: ` 
                 <p><strong>วันที่เริ่ม:</strong> ${moment(event.start).format('DD/MM/YYYY')}</p>
-                <p><strong>วันที่สิ้นสุด:</strong> ${event.end ? moment(event.end).format('DD/MM/YYYY') : 'ไม่ระบุ'}</p>
+                <p><strong>วันที่สิ้นสุด:</strong> ${event.end ? moment(event.end).format('DD/MM/YYYY') : moment(event.start).format('DD/MM/YYYY')}</p>
               `,
               icon: 'info',
               showCancelButton: true,
@@ -60,22 +60,22 @@
     function openEventModal() {
       Swal.fire({
         title: 'เพิ่มเหตุการณ์',
-        html: `
+        html: ` 
           <label for="eventTitle">ชื่อเหตุการณ์:</label>
           <input list="eventOptions" id="eventTitle" class="swal2-input" placeholder="เลือกหรือพิมพ์ชื่อเหตุการณ์">
           <datalist id="eventOptions">
             <option value="ศูนย์ขอนแก่น">
-            <option value="ศูนย์สกลนคร">
-            <option value="ศูนย์อุดรธานี">
-            <option value="ศูนย์ชัยภูมิ">
-            <option value="หนองคาย">
-            <option value="เลย">
-            <option value="นครพนม">
-            <option value="มุกดาหาร">
-            <option value="กาฬสินธุ์">
-            <option value="มหาสารคาม">
+            <option value="ศูนย์สกลนคร,ออกปฎิบัติงานนอกสถานที่">
+            <option value="ศูนย์อุดรธานี,ออกปฎิบัติงานนอกสถานที่">
+            <option value="ศูนย์ชัยภูมิ,ออกปฎิบัติงานนอกสถานที่">
+            <option value="หนองคาย,ออกปฎิบัติงานนอกสถานที่">
+            <option value="เลย,ออกปฎิบัติงานนอกสถานที่">
+            <option value="นครพนม,ออกปฎิบัติงานนอกสถานที่">
+            <option value="มุกดาหาร,ออกปฎิบัติงานนอกสถานที่">
+            <option value="กาฬสินธุ์,ออกปฎิบัติงานนอกสถานที่">
+            <option value="มหาสารคาม,ออกปฎิบัติงานนอกสถานที่">
             <option value="ประชุมทีมขาย">
-            <option value="อบรพนักงานใหม่">
+            <option value="อบรมพนักงานใหม่">
           </datalist>
           <br><br>
           <label for="startDate">วันที่เริ่มต้น:</label>
