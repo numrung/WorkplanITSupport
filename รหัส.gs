@@ -15,7 +15,7 @@ function getEvents() {
     id: i + 1,
     title: row[0],
     start: formatDate(row[1]),
-    end: row[2] ? formatDate(row[2]) : formatDate(row[1])
+    end: row[2] ? formatDate(row[2]) : formatDate(row[1]) // ใช้วันที่เริ่มต้นหากไม่มีวันที่สิ้นสุด
   } : null).filter(Boolean);
   
   return events;
@@ -42,6 +42,9 @@ function addEvent(title, startDate, endDate) {
     // หากไม่พบแถวที่ตรงกับวันที่เริ่มต้น ให้เพิ่มแถวใหม่
     rowIndex = sheet.getLastRow() + 1;
   }
+  
+  // หากไม่มีวันที่สิ้นสุด ให้ใช้วันที่เริ่มต้นเป็นวันที่สิ้นสุด
+  endDate = endDate || startDate;
   
   // บันทึกเหตุการณ์ลงในแถวที่พบหรือแถวใหม่
   sheet.getRange(rowIndex, 1).setValue(title); // คอลัมน์ A
